@@ -1,0 +1,109 @@
+import jomp.runtime.OMP;
+import java.util.Arrays;
+import java.util.Random;
+
+public class w12_sorting {
+    static int N = 20;
+    static int A[] = new int[N];
+
+    static void Sort(int A[], int from, int to){
+        Arrays.sort(A, from, to);
+    }
+
+    static void Merge(int A[], int from1, int to1, int from2, int to2) {
+        int B[] = new int[to1 - from1];
+        int C[] = new int[to2 - from2];
+        for (int i = from1; i < to1; i++) {
+            B[i - from1] = A[i];
+        }
+        for (int i = from2; i < to2; i++) {
+            C[i - from2] = A[i];
+        }
+
+        int i = 0, j = 0;
+        int index = from1;
+        while (i < B.length && j < C.length) {
+            if (B[i] < C[j]) {
+                A[index] = B[i];
+                index ++;
+                i++;
+            } else if(B[i] > C[j]) {
+                A[index] = C[j];
+                index ++;
+                j++;
+            } else {
+                A[index] = B[i];
+                index++; i++;
+                A[index] = C[j];
+                index ++; j++;
+            }
+        }
+        if(i < B.length){
+            while(i < B.length){
+                A[index] = B[i];
+                index++; i++;
+            }
+        } else if( j < C.length){
+            while(j < C.length) {
+                A[index] = C[j];
+                index++; j++;
+            }
+        } else {
+            System.out.println();
+        }
+    }
+
+    public static void main(String [] args) {
+        Random ran = new Random();
+        System.out.println("The array before sorting:");
+        for(int i = 0; i < N; i++) {
+            A[i] = ran.nextInt(100);
+            System.out.print(A[i]);
+	    System.out.print(" ; ");
+        }
+        System.out.println();
+
+        OMP.setNumThreads(4);
+        //omp parallel sections
+        {
+            //omp section
+            {
+                Sort(A, 0, N/4);
+            }
+            //omp section
+            {
+                Sort(A, N/4, N/2);
+            }
+            //omp section
+            {
+                Sort(A, N/2, 3 * N / 4);
+            }
+            //omp section
+            {
+                Sort(A, 3 * N / 4, N);
+            }
+        }
+
+
+        OMP.setNumThreads(2);
+        //omp parallel sections
+        {
+            //omp section
+            {
+                Merge(A, 0, N / 4, N / 4, N / 2);
+            }
+            //omp section
+            {
+                Merge(A, N / 2 , 3 * N / 4, 3 * N / 4, N);
+            }
+        }
+        Merge(A, 0, N / 2, N / 2, N);
+        System.out.println("The array after sorting:");
+        for(int i = 0; i < N; i++) {
+            System.out.print(A[i]);
+	    System.out.print(" ; ");
+        }
+	System.out.println();
+    }
+}
+

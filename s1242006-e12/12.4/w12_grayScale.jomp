@@ -1,0 +1,71 @@
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
+import java.io.File;
+import java.io.IOException;
+import jomp.runtime.OMP;
+
+
+public class w12_grayScale {
+    static BufferedImage img;
+    static WritableRaster raster;
+    static BufferedImage newImg;
+    static WritableRaster newRas;
+
+    static class GrayScale {
+        private int fromWidth, toWidth, fromHeight, toHeight;
+        private BufferedImage img;
+        WritableRaster raster;
+        public GrayScale(BufferedImage img, int fromWidth, int toWidth, int fromHeight,int toHeight) {
+            this.fromWidth = fromWidth;
+            this.toWidth = toWidth;
+            this.fromHeight = fromHeight;
+            this.toHeight = toHeight;
+            this.img = img;
+            this.raster = img.getRaster();
+        }
+
+        public void solveSmall(int width){
+            //omp parallel for
+            for(int i = fromHeight; i < toHeight; i++) {
+                double R = raster.getSample(width, i, 0);
+                double G = raster.getSample(width, i, 1);
+                double B = raster.getSample(width, i, 2);
+
+                double level = 0.3 * R + 0.59 * G + 0.11 * B;
+                newRas.setSample(width, i , 0, level);
+                newRas.setSample(width, i, 1, level);
+                newRas.setSample(width, i, 2, level);
+            }
+        }
+
+        public void solveBig(int from, int to) {
+            int mid = (to + from) / 2;
+            if(to - from == 1){
+                solveSmall(from);
+                return;
+            }
+            {
+                solveBig(from, mid);
+                solveBig(mid , to);
+            }
+
+        }
+
+        public void compute(){
+            solveBig(fromWidth, toWidth);
+        }
+    }
+
+
+    public static void main(String [] args) throws IOException {
+        img = ImageIO.read(new File(args[0]));
+        int x = img.getWidth();
+        int y = img.getHeight();
+        newImg = new BufferedImage(x, y, img.getType());
+        newRas = newImg.getRaster();
+        GrayScale gs = new GrayScale(img, 0, x, 0, y);
+        gs.compute();
+        ImageIO.write(newImg, "png", new File(args[1]));
+    }
+}
