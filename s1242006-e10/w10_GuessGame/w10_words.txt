@@ -1,0 +1,11 @@
+hello
+name
+age
+clearly
+seldom
+usually
+today
+yesterday
+tomorrow
+pen
+ruler
